@@ -325,3 +325,21 @@
 - Ran `pytest -q`; result: 12 passed.
 - Ran `node --check app.js`; result: passed.
 - Smoke-tested local state/brief endpoints; summary now reads like `正在判断：我想做副业赚钱...；当前建议：小试`.
+
+## 2026-05-20 Repository And Automation Setup
+
+- Initialized `E:\AIwork\real` as a Git repository.
+- Added `README.md` with local run and test instructions.
+- Expanded `.gitignore` so `.env`, SQLite database files, WAL/SHM files, logs, caches, and bytecode are not committed.
+- Verified no obvious secrets were staged.
+- Ran checks before initial commit:
+  - `pytest -q`; result: 12 passed.
+  - `node --check app.js`; result: passed.
+- Created initial commit: `Initial REAL decision agent prototype`.
+- Added GitHub remote: `https://github.com/Kilig1058674225/R.E.A.L.git`.
+- Pushed `main` to GitHub.
+- Ran `smart-search doctor --format json`; result: ok, search/docs/fetch capabilities available.
+- Created active Codex cron automation `REAL Autonomous Iteration`:
+  - schedule: every 6 hours
+  - workspace: `E:\AIwork\real`
+  - behavior: read project docs, research comparable products with smart-search when useful, implement one high-impact iteration, run checks, update docs, commit, and push when tests pass.
