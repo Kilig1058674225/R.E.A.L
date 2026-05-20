@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>REAL Decision Agent</title>
+    <link rel="stylesheet" href="/static/styles.css?v=11" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="sidebar">
+        <div class="brand-row">
+          <div>
+            <p class="eyebrow">REAL</p>
+            <strong>决策助手</strong>
+          </div>
+          <button id="refreshBtn" class="icon-btn" title="刷新" type="button">↻</button>
+        </div>
+
+        <button id="newCaseBtn" class="new-chat-btn" type="button">+ 新决策</button>
+
+        <section class="case-list-panel">
+          <div class="side-heading">
+            <span>历史对话</span>
+            <span id="caseCount">0</span>
+          </div>
+          <div id="caseList" class="case-list"></div>
+        </section>
+      </aside>
+
+      <section class="chat-shell">
+        <header class="chat-header">
+          <div>
+            <p id="caseMeta" class="eyebrow"></p>
+            <h1 id="caseName">新的决策</h1>
+          </div>
+          <div class="status-strip">
+            <span id="classification"></span>
+            <span id="stakes"></span>
+            <span id="searchRequired"></span>
+          </div>
+        </header>
+
+        <section class="work-area">
+          <section class="chat-scroll">
+            <div id="emptyState" class="empty-state">
+              <h2>今天想判断什么？</h2>
+              <p>直接说正在犹豫的事就行。</p>
+            </div>
+
+            <section id="messages" class="messages" aria-live="polite"></section>
+          </section>
+
+          <aside id="decisionPanel" class="decision-panel hidden" aria-label="决策面板">
+            <section class="panel-card">
+              <div class="panel-title">
+                <span>当前建议</span>
+                <strong id="panelAction">-</strong>
+              </div>
+              <p id="panelActionHint" class="panel-hint"></p>
+              <p id="panelSummary" class="panel-summary">暂无决策状态。</p>
+              <div class="mini-grid">
+                <div>
+                  <span>置信度</span>
+                  <strong id="panelConfidence">-</strong>
+                </div>
+                <div>
+                  <span>证据</span>
+                  <strong id="panelEvidence">-</strong>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel-card">
+              <div class="panel-title">
+                <span>现在先做</span>
+                <strong id="panelReviewDate">-</strong>
+              </div>
+              <p id="panelPlanHint" class="panel-hint"></p>
+              <p id="panelReviewStatus" class="review-status"></p>
+              <ul id="panelNextSteps" class="compact-list"></ul>
+              <button id="savePlanBtn" class="panel-btn" type="button">记录当前计划</button>
+            </section>
+
+            <section class="panel-card">
+              <div class="panel-title">
+                <span>风险与止损</span>
+              </div>
+              <ul id="panelRisks" class="compact-list"></ul>
+              <ul id="panelStops" class="compact-list muted-list"></ul>
+            </section>
+
+            <section class="panel-card">
+              <div class="panel-title">
+                <span>需要你补充</span>
+              </div>
+              <p id="panelGapsHint" class="panel-hint"></p>
+              <ul id="panelGaps" class="compact-list"></ul>
+            </section>
+
+            <section class="panel-card">
+              <div class="panel-title">
+                <span>Journal</span>
+                <strong id="panelJournalCount">0</strong>
+              </div>
+              <p id="panelJournalHint" class="panel-hint"></p>
+              <div id="panelJournalList" class="journal-list"></div>
+            </section>
+          </aside>
+        </section>
+
+        <footer class="composer-wrap">
+          <form id="composerForm" class="composer">
+            <textarea
+              id="composerInput"
+              rows="3"
+              placeholder="给 REAL 发消息"
+              required
+            ></textarea>
+            <button id="sendBtn" type="submit">发送</button>
+          </form>
+        </footer>
+      </section>
+    </main>
+    <script src="/static/app.js?v=11"></script>
+  </body>
+</html>

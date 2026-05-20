@@ -1,0 +1,4 @@
+interface:
+  display_name: "REAL Decision Agent Dev"
+  short_description: "Guide development of the REAL decision-support agent project."
+  default_prompt: "Use this skill to continue development of the REAL decision-support agent, reading project docs first and preserving decisions, progress, and bugs."
