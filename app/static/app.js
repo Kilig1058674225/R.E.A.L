@@ -248,17 +248,32 @@ async function streamAssistant(path, payload) {
   const assistantNode = appendLocalMessage("assistant", "", { streaming: true });
   const body = assistantNode.querySelector(".message-body");
   let content = "";
+  let statusText = "正在连接 REAL...";
 
-  await readEventStream(path, payload, {
-    delta(chunk) {
-      content += chunk;
-      body.innerHTML = renderAssistantMessage(content, { detailOpen: true });
-      scrollChatToBottom();
-    },
-    error(detail) {
-      throw new Error(detail || "流式响应失败");
-    },
-  });
+  body.innerHTML = renderToolStatus(statusText);
+  try {
+    await readEventStream(path, payload, {
+      status(data) {
+        statusText = data.message || "正在处理...";
+        if (!content) {
+          body.innerHTML = renderToolStatus(statusText, data.queries || []);
+          scrollChatToBottom();
+        }
+      },
+      delta(chunk) {
+        content += chunk;
+        body.innerHTML = renderAssistantMessage(content, { detailOpen: true });
+        scrollChatToBottom();
+      },
+      error(detail) {
+        throw new Error(detail || "流式响应失败");
+      },
+    });
+  } catch (error) {
+    assistantNode.classList.remove("streaming");
+    body.innerHTML = renderToolError(error.message);
+    throw error;
+  }
 
   assistantNode.classList.remove("streaming");
   body.innerHTML = renderAssistantMessage(content, { detailOpen: true });
@@ -567,6 +582,8 @@ function handleSseEvent(rawEvent, handlers) {
   const data = JSON.parse(dataLines.join("\n"));
   if (eventType === "delta") {
     handlers.delta?.(data.content || "");
+  } else if (eventType === "status") {
+    handlers.status?.(data);
   } else if (eventType === "error") {
     handlers.error?.(data.detail || "流式响应失败");
   }
@@ -827,6 +844,27 @@ function formatInline(value) {
 
 function renderPlainText(value) {
   return `<p>${escapeHtml(value).replace(/\r?\n/g, "<br />")}</p>`;
+}
+
+function renderToolStatus(message, queries = []) {
+  const queryList = (queries || [])
+    .map((query) => `<li>${escapeHtml(query)}</li>`)
+    .join("");
+  return `
+    <div class="tool-status">
+      <strong>${escapeHtml(message)}</strong>
+      ${queryList ? `<ul>${queryList}</ul>` : ""}
+    </div>
+  `;
+}
+
+function renderToolError(message) {
+  return `
+    <div class="tool-status error">
+      <strong>处理失败</strong>
+      <p>${escapeHtml(message)}</p>
+    </div>
+  `;
 }
 
 function isTableSeparator(line) {

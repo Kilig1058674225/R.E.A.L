@@ -40,7 +40,7 @@ from app.models import (
     MessageCreate,
     OptionCreate,
 )
-from app.services.decision_agent import generate_reply, generate_reply_stream
+from app.services.decision_agent import generate_reply, generate_reply_stream, prepare_evidence_for_reply
 from app.services.decision_brief import build_decision_brief
 from app.services.decision_engine import evaluate
 from app.services.decision_memory import build_decision_state
@@ -250,6 +250,24 @@ def sse_event(event_type: str, data: dict[str, object]) -> str:
 
 def stream_agent_reply(conn, case_id: int, payload: AgentReplyRequest) -> Iterator[str]:
     try:
+        yield sse_event("status", {"message": "正在判断是否需要联网核验证据..."})
+        evidence_result = prepare_evidence_for_reply(conn, case_id, payload)
+        if evidence_result:
+            yield sse_event(
+                "status",
+                {
+                    "message": (
+                        f"证据核验完成：生成 {len(evidence_result.queries)} 个查询，"
+                        f"抓取 {evidence_result.fetched_count} 条可引用来源。"
+                    ),
+                    "queries": evidence_result.queries,
+                    "fetched_count": evidence_result.fetched_count,
+                    "candidate_count": evidence_result.candidate_count,
+                },
+            )
+        else:
+            yield sse_event("status", {"message": "这轮先不需要联网核验，直接进入决策分析。"})
+        yield sse_event("status", {"message": "正在生成 REAL 决策回复..."})
         for chunk in generate_reply_stream(conn, case_id, payload):
             yield sse_event("delta", {"content": chunk})
         yield sse_event("done", {"ok": True})

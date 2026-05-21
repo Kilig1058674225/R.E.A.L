@@ -400,3 +400,19 @@
   - `pytest -q`; result: 15 passed.
   - `node --check app.js`; result: passed.
   - Python compile check; result: passed.
+
+## 2026-05-21 Evidence Process Visibility Pass 1
+
+- Added SSE `status` events to streaming agent responses.
+- The chat now shows tool progress before the first LLM token:
+  - checking whether evidence verification is needed
+  - evidence query/fetch completion status
+  - transition into REAL response generation
+- Frontend streaming now renders a visible tool-status bubble instead of an empty assistant bubble while evidence search/fetch is running.
+- Streaming errors now render in the assistant bubble instead of leaving a blank message, making search/tool failures visible.
+- Added regression coverage for status events in the streaming API.
+- Validation:
+  - `pytest -q`; result: 16 passed.
+  - `node --check app.js`; result: passed.
+  - Python compile check; result: passed.
+  - frontend DOM id consistency check; result: no missing ids.

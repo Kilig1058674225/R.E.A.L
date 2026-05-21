@@ -51,6 +51,11 @@ def generate_reply(conn: sqlite3.Connection, case_id: int, payload: AgentReplyRe
     return message
 
 
+def prepare_evidence_for_reply(conn: sqlite3.Connection, case_id: int, payload: AgentReplyRequest):
+    messages = repository.list_messages(conn, case_id)[-payload.recent_message_limit :]
+    return maybe_search(conn, case_id, payload.note, messages)
+
+
 def generate_reply_stream(conn: sqlite3.Connection, case_id: int, payload: AgentReplyRequest) -> Iterator[str]:
     chunks: list[str] = []
     for chunk in stream_reply_content(conn, case_id, payload):
@@ -108,9 +113,9 @@ def maybe_search(
     case_id: int,
     note: str,
     messages: list[ConversationMessage],
-) -> None:
+) -> object | None:
     if repository.list_evidence(conn, case_id):
-        return
+        return None
 
     latest_user_text = note.strip()
     if not latest_user_text:
@@ -120,15 +125,15 @@ def maybe_search(
                 break
 
     if not latest_user_text:
-        return
+        return None
 
     classification = classify_problem(latest_user_text)
     if not classification["search_required"]:
-        return
+        return None
 
     query = latest_user_text[:300]
     try:
-        run_evidence_tool(
+        return run_evidence_tool(
             conn,
             case_id,
             EvidenceRunRequest(focus=query, max_queries=1, fetch_sources=2),
@@ -143,3 +148,4 @@ def maybe_search(
             fetched_text=str(exc),
             confidence="error",
         )
+    return None

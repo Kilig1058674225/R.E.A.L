@@ -678,6 +678,37 @@ a {
   margin: 18px 0;
 }
 
+.tool-status {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f7f7f8;
+  padding: 11px 12px;
+  color: #374151;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.tool-status strong {
+  font-size: 14px;
+}
+
+.tool-status ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.tool-status p {
+  margin: 0;
+}
+
+.tool-status.error {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
 .answer-summary {
   margin-bottom: 10px;
 }

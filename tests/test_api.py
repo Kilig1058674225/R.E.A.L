@@ -201,6 +201,45 @@ def test_agent_message_stream_records_assistant(monkeypatch, tmp_path):
         assert "当前建议" in case_after["summary"]
 
 
+def test_agent_stream_emits_status_events(monkeypatch, tmp_path):
+    monkeypatch.setenv("LLM_BASE_URL", "https://example.test/v1")
+    monkeypatch.setenv("LLM_API_KEY", "test-key")
+    monkeypatch.setenv("LLM_MODEL", "test-model")
+    client = build_client(monkeypatch, tmp_path)
+
+    def fake_run_evidence_tool(conn, case_id, payload):
+        from app.models import EvidenceRunResponse
+
+        return EvidenceRunResponse(queries=["竞品 付费"], fetched_count=1, candidate_count=1)
+
+    def fake_chat_completion_stream(settings, *, messages, temperature=0.2, max_tokens=900):
+        yield "## 简洁结论\n建议先观察。"
+
+    monkeypatch.setattr("app.services.decision_agent.run_evidence_tool", fake_run_evidence_tool)
+    monkeypatch.setattr("app.services.decision_agent.chat_completion_stream", fake_chat_completion_stream)
+
+    with client:
+        case = client.post(
+            "/api/cases",
+            json={
+                "title": "证据展示测试",
+                "user_goal": "我想查竞品和付费情况。",
+                "current_question": "需要联网核验。",
+            },
+        ).json()
+        with client.stream(
+            "POST",
+            f"/api/cases/{case['id']}/agent/message/stream",
+            json={"content": "请帮我搜一下竞品和付费情况。"},
+        ) as response:
+            assert response.status_code == 200
+            body = "".join(response.iter_text())
+            assert "event: status" in body
+            assert "正在判断是否需要联网核验证据" in body
+            assert "正在生成 REAL 决策回复" in body
+            assert "event: delta" in body
+
+
 def test_case_state_extracts_questions_and_options(monkeypatch, tmp_path):
     client = build_client(monkeypatch, tmp_path)
     with client:

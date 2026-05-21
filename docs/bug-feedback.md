@@ -65,3 +65,4 @@
 - Manual evidence search and quick evaluation endpoints still exist, but are no longer exposed as primary UI controls.
 - `POST /api/cases/{case_id}/evidence/run` is now the primary evidence-tool endpoint; the older manual search endpoint remains available for debugging/advanced use.
 - The assistant previously described itself as unable to browse the web even though the backend had evidence tooling; the system prompt now explicitly discloses the smart-search capability layer.
+- Evidence search/fetch previously ran before the first stream token with no visible progress, making search-triggered messages look like they disappeared; streaming now emits visible status events and renders tool errors in the chat bubble.
