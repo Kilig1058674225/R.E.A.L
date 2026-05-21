@@ -417,6 +417,62 @@ def test_case_rename_delete_and_journal_delete(monkeypatch, tmp_path):
         assert missing_response.status_code == 404
 
 
+def test_evidence_tool_searches_and_fetches_sources(monkeypatch, tmp_path):
+    client = build_client(monkeypatch, tmp_path)
+
+    def fake_run_search(query, extra_sources=2):
+        return {
+            "_command": f"smart-search search {query}",
+            "_output_path": "C:/tmp/fake-search.json",
+            "source_warning": "fetch before claim",
+            "primary_sources": [
+                {
+                    "url": "https://example.com/source-a",
+                    "title": "Source A",
+                    "description": "candidate snippet",
+                }
+            ],
+        }
+
+    def fake_run_fetch(url):
+        return {
+            "_command": f"smart-search fetch {url}",
+            "_output_path": "C:/tmp/fake-fetch.json",
+            "title": "Fetched Source A",
+            "content": "This is fetched page text that can be cited by the decision agent.",
+        }
+
+    monkeypatch.setattr("app.services.evidence_tool.run_search", fake_run_search)
+    monkeypatch.setattr("app.services.evidence_tool.run_fetch", fake_run_fetch)
+
+    with client:
+        case = client.post(
+            "/api/cases",
+            json={
+                "title": "是否做一个小服务",
+                "user_goal": "我想了解市场上有没有竞品。",
+                "current_question": "需要核验竞品和付费情况。",
+            },
+        ).json()
+
+        response = client.post(
+            f"/api/cases/{case['id']}/evidence/run",
+            json={"focus": "竞品 付费 市场", "max_queries": 1, "fetch_sources": 1},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["queries"] == ["竞品 付费 市场"]
+        assert data["fetched_count"] == 1
+        assert data["candidate_count"] == 1
+
+        evidence = client.get(f"/api/cases/{case['id']}/evidence").json()
+        assert any(item["confidence"] == "fetched" for item in evidence)
+        assert any(item["source_type"] == "metadata" for item in evidence)
+        fetched = [item for item in evidence if item["confidence"] == "fetched"][0]
+        assert fetched["url"] == "https://example.com/source-a"
+        assert "fetched page text" in fetched["fetched_text"]
+
+
 def test_evaluate_anti_ruin_gate(monkeypatch, tmp_path):
     client = build_client(monkeypatch, tmp_path)
     with client:

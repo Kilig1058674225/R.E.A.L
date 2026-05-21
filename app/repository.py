@@ -207,6 +207,30 @@ def list_evidence(conn: sqlite3.Connection, case_id: int) -> list[EvidenceItem]:
     return [EvidenceItem(**dict(row)) for row in rows]
 
 
+def evidence_url_exists(conn: sqlite3.Connection, case_id: int, url: str) -> bool:
+    if not url:
+        return False
+    row = conn.execute(
+        "SELECT 1 FROM evidence_items WHERE case_id = ? AND url = ? LIMIT 1",
+        (case_id, url),
+    ).fetchone()
+    return row is not None
+
+
+def fetched_evidence_url_exists(conn: sqlite3.Connection, case_id: int, url: str) -> bool:
+    if not url:
+        return False
+    row = conn.execute(
+        """
+        SELECT 1 FROM evidence_items
+        WHERE case_id = ? AND url = ? AND source_type IN ('fetched_page', 'fetch_error')
+        LIMIT 1
+        """,
+        (case_id, url),
+    ).fetchone()
+    return row is not None
+
+
 def add_journal(conn: sqlite3.Connection, case_id: int, payload: JournalCreate) -> JournalEntry:
     get_case(conn, case_id)
     cursor = conn.execute(

@@ -361,3 +361,28 @@
   - `python -m compileall app`; result: passed via LibreOffice Python 3.11.14.
   - `git diff --check`; result: passed.
   - `pytest -q`; not completed in this automation environment because `pytest` is not on PATH, the Windows Store Python shim is unavailable, `uv` cannot create/use its cache or managed Python under sandbox restrictions, and the reachable LibreOffice Python does not have project test dependencies installed.
+
+## 2026-05-21 Evidence Tool Layer Pass 1
+
+- Upgraded the evidence layer from single search summaries to a full fetch-and-store tool flow.
+- Added `smart-search fetch` support in the local wrapper.
+- Added `EvidenceRunRequest` / `EvidenceRunResponse` models.
+- Added a new service module:
+  - `app/services/evidence_tool.py`
+  - builds evidence queries from the current case, rolling state, and information gaps
+  - runs `smart-search search`
+  - stores candidate sources
+  - fetches top source URLs and stores fetched page text as citeable evidence
+- Added `POST /api/cases/{case_id}/evidence/run`.
+- Updated the agent so automatic evidence gathering now uses the new evidence tool instead of only the search summary path.
+- Added a frontend evidence panel with:
+  - `核验证据` button
+  - evidence status
+  - short source list with fetched/candidate labels
+- Added regression coverage for the evidence tool path.
+- Ran `smart-search search` for pattern research on retrieve-before-claim / RAG evidence tooling; saved output to `C:\tmp\smart-search-evidence\real-decision-agent\evidence-layer-patterns.json`.
+- Validation:
+  - `pytest -q`; result: 14 passed.
+  - `node --check app.js`; result: passed.
+  - Python compile check; result: passed.
+  - frontend DOM id consistency check; result: no missing ids.

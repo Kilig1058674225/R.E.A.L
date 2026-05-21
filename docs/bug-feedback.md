@@ -54,6 +54,7 @@
 - Fixed current-suggestion summary incorrectly treating greetings, model questions, and raw first messages as the decision goal.
 - Clarified the right decision panel labels so action steps, questions to answer, and review journal timing are easier to distinguish.
 - Added optional `REAL_ACCESS_TOKEN` API protection and frontend token prompting for phone/non-local deployment readiness.
+- Upgraded smart-search integration into an evidence tool layer that plans queries, stores candidate sources, fetches pages, and shows evidence in the decision panel.
 
 ## New Implementation Notes
 
@@ -62,3 +63,4 @@
 - Browser smoke found the mobile layout usable at a 390px-wide viewport.
 - LLM configuration is now read from `.env`; the local `.env` template intentionally has an empty API key until the user fills it in.
 - Manual evidence search and quick evaluation endpoints still exist, but are no longer exposed as primary UI controls.
+- `POST /api/cases/{case_id}/evidence/run` is now the primary evidence-tool endpoint; the older manual search endpoint remains available for debugging/advanced use.

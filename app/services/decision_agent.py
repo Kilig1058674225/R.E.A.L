@@ -5,12 +5,13 @@ from typing import Iterator
 
 from app import repository
 from app.config import get_settings
-from app.models import AgentReplyRequest, ConversationMessage, MessageCreate
+from app.models import AgentReplyRequest, ConversationMessage, EvidenceRunRequest, MessageCreate
 from app.services.decision_brief import brief_context_text, build_decision_brief
 from app.services.decision_engine import classify_problem
 from app.services.decision_memory import build_decision_state, refresh_case_summary, state_context_text
+from app.services.evidence_tool import run_evidence_tool
 from app.services.llm import chat_completion, chat_completion_stream
-from app.services.smart_search import SmartSearchError, run_search
+from app.services.smart_search import SmartSearchError
 
 
 SYSTEM_PROMPT = """你是 REAL 决策 Agent，不是普通聊天助手。
@@ -123,8 +124,11 @@ def maybe_search(
 
     query = latest_user_text[:300]
     try:
-        data = run_search(query, extra_sources=1)
-        repository.store_search_result(conn, case_id, query, data)
+        run_evidence_tool(
+            conn,
+            case_id,
+            EvidenceRunRequest(focus=query, max_queries=1, fetch_sources=2),
+        )
     except SmartSearchError as exc:
         repository.add_evidence(
             conn,

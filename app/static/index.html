@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>REAL Decision Agent</title>
-    <link rel="stylesheet" href="/static/styles.css?v=12" />
+    <link rel="stylesheet" href="/static/styles.css?v=13" />
   </head>
   <body>
     <main class="app-shell">
@@ -73,6 +73,16 @@
 
             <section class="panel-card">
               <div class="panel-title">
+                <span>证据核验</span>
+                <strong id="panelEvidenceStatus">0 条</strong>
+              </div>
+              <p id="panelEvidenceHint" class="panel-hint"></p>
+              <button id="runEvidenceBtn" class="panel-btn secondary" type="button">核验证据</button>
+              <div id="panelEvidenceList" class="evidence-list"></div>
+            </section>
+
+            <section class="panel-card">
+              <div class="panel-title">
                 <span>现在先做</span>
                 <strong id="panelReviewDate">-</strong>
               </div>
@@ -122,6 +132,6 @@
         </footer>
       </section>
     </main>
-    <script src="/static/app.js?v=12"></script>
+    <script src="/static/app.js?v=13"></script>
   </body>
 </html>

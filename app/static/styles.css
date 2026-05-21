@@ -420,6 +420,61 @@ a {
   color: var(--accent-ink);
 }
 
+.panel-btn.secondary {
+  margin-top: 4px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+}
+
+.evidence-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.evidence-item {
+  display: grid;
+  gap: 5px;
+  border-radius: 10px;
+  background: var(--soft);
+  padding: 8px;
+  font-size: 12px;
+}
+
+.evidence-item.fetched {
+  border: 1px solid #a7f3d0;
+  background: #f0fdf4;
+}
+
+.evidence-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.evidence-head a,
+.evidence-head strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.evidence-head span {
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+
+.evidence-item p {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.45;
+}
+
 .journal-list {
   display: grid;
   gap: 8px;

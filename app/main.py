@@ -29,6 +29,8 @@ from app.models import (
     EvaluationRequest,
     EvaluationResponse,
     EvidenceItem,
+    EvidenceRunRequest,
+    EvidenceRunResponse,
     EvidenceSearchRequest,
     JournalCreate,
     JournalEntry,
@@ -44,6 +46,7 @@ from app.services.decision_engine import evaluate
 from app.services.decision_memory import build_decision_state
 from app.services.decision_plan import build_action_plan, create_journal_from_brief
 from app.services.decision_review import build_case_reviews, build_due_reviews
+from app.services.evidence_tool import run_evidence_tool
 from app.services.llm import LLMConfigurationError, LLMRequestError
 from app.services.smart_search import SmartSearchError, run_search
 
@@ -323,6 +326,14 @@ def search_evidence(case_id: int, payload: EvidenceSearchRequest, conn=Depends(d
         raise HTTPException(status_code=404, detail="Decision case not found") from exc
     except SmartSearchError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@app.post("/api/cases/{case_id}/evidence/run", response_model=EvidenceRunResponse)
+def run_case_evidence_tool(case_id: int, payload: EvidenceRunRequest, conn=Depends(db)):
+    try:
+        return run_evidence_tool(conn, case_id, payload)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Decision case not found") from exc
 
 
 @app.get("/api/cases/{case_id}/evidence", response_model=list[EvidenceItem])

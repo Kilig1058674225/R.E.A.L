@@ -6,6 +6,7 @@ const state = {
   brief: null,
   actionPlan: null,
   reviews: [],
+  evidence: [],
   accessToken: window.localStorage.getItem("realAccessToken") || "",
 };
 
@@ -270,16 +271,18 @@ async function loadDecisionPanel() {
     return;
   }
   const caseId = state.activeCase.id;
-  const [decisionState, brief, actionPlan, reviews] = await Promise.all([
+  const [decisionState, brief, actionPlan, reviews, evidence] = await Promise.all([
     api(`/api/cases/${caseId}/state`),
     api(`/api/cases/${caseId}/brief`),
     api(`/api/cases/${caseId}/action-plan`),
     api(`/api/cases/${caseId}/reviews`),
+    api(`/api/cases/${caseId}/evidence`),
   ]);
   state.decisionState = decisionState;
   state.brief = brief;
   state.actionPlan = actionPlan;
   state.reviews = reviews;
+  state.evidence = evidence;
   renderDecisionPanel();
 }
 
@@ -288,11 +291,15 @@ function clearDecisionPanel() {
   state.brief = null;
   state.actionPlan = null;
   state.reviews = [];
+  state.evidence = [];
   $("panelAction").textContent = "-";
   $("panelActionHint").textContent = "";
   $("panelSummary").textContent = "暂无决策状态。";
   $("panelConfidence").textContent = "-";
   $("panelEvidence").textContent = "-";
+  $("panelEvidenceStatus").textContent = "0 条";
+  $("panelEvidenceHint").textContent = "";
+  renderEvidenceList([]);
   $("panelReviewDate").textContent = "-";
   $("panelPlanHint").textContent = "";
   $("panelReviewStatus").textContent = "";
@@ -316,6 +323,9 @@ function renderDecisionPanel() {
   $("panelSummary").textContent = brief.summary || decisionState.summary || "暂无摘要。";
   $("panelConfidence").textContent = confidenceLabel(brief.confidence);
   $("panelEvidence").textContent = `${decisionState.evidence_count || 0} 条`;
+  $("panelEvidenceStatus").textContent = evidenceStatusText(state.evidence);
+  $("panelEvidenceHint").textContent = "需要外部事实时，系统会检索候选来源并抓取关键页面；抓取成功的证据会进入 Agent 上下文。";
+  renderEvidenceList(state.evidence);
   $("panelReviewDate").textContent = actionPlan.review_date ? `复盘日 ${actionPlan.review_date}` : "-";
   $("panelPlanHint").textContent = "这里是可以先执行的小步动作；遇到不确定的，就回到聊天框继续说。";
   $("panelReviewStatus").textContent = reviewStatusText(state.reviews[0]);
@@ -328,6 +338,59 @@ function renderDecisionPanel() {
   renderList("panelGaps", brief.information_gaps);
   $("panelJournalHint").textContent = "点“记录当前计划”后，到复盘日再填写结果。";
   renderJournalList(state.reviews);
+}
+
+function evidenceStatusText(items) {
+  const fetched = (items || []).filter((item) => item.confidence === "fetched").length;
+  return fetched ? `${fetched} 条可引用` : `${(items || []).length} 条`;
+}
+
+function renderEvidenceList(items) {
+  const box = $("panelEvidenceList");
+  box.innerHTML = "";
+  const visible = (items || []).filter((item) => item.source_type !== "metadata").slice(0, 4);
+  if (!visible.length) {
+    box.innerHTML = `<p class="empty-mini">还没有证据。需要事实核验时点“核验证据”。</p>`;
+    return;
+  }
+  visible.forEach((item) => {
+    const node = document.createElement("div");
+    node.className = `evidence-item ${item.confidence}`;
+    const title = item.title || item.url || item.query;
+    const href = item.url ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noreferrer">${escapeHtml(title)}</a>` : `<strong>${escapeHtml(title)}</strong>`;
+    node.innerHTML = `
+      <div class="evidence-head">
+        ${href}
+        <span>${evidenceLabel(item)}</span>
+      </div>
+      <p>${escapeHtml((item.fetched_text || item.query || "").slice(0, 140))}</p>
+    `;
+    box.appendChild(node);
+  });
+}
+
+function evidenceLabel(item) {
+  if (item.confidence === "fetched") return "已抓取";
+  if (item.confidence === "error") return "失败";
+  return "候选";
+}
+
+async function runEvidenceTool() {
+  if (!state.activeCase || state.busy) return;
+  setBusy(true);
+  try {
+    $("runEvidenceBtn").textContent = "核验中";
+    await api(`/api/cases/${state.activeCase.id}/evidence/run`, {
+      method: "POST",
+      body: JSON.stringify({ max_queries: 3, fetch_sources: 3 }),
+    });
+    await loadDecisionPanel();
+  } catch (error) {
+    alert(error.message);
+  } finally {
+    $("runEvidenceBtn").textContent = "核验证据";
+    setBusy(false);
+  }
 }
 
 function renderList(id, items) {
@@ -800,6 +863,7 @@ $("composerForm").addEventListener("submit", handleComposer);
 $("newCaseBtn").addEventListener("click", newCase);
 $("refreshBtn").addEventListener("click", loadCases);
 $("savePlanBtn").addEventListener("click", savePlanToJournal);
+$("runEvidenceBtn").addEventListener("click", runEvidenceTool);
 $("composerInput").addEventListener("keydown", (event) => {
   if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
     $("composerForm").requestSubmit();

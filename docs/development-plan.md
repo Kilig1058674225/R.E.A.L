@@ -88,6 +88,9 @@ Responsibilities:
 - save commands and source URLs
 - fetch pages before source-backed claims
 - record evidence confidence and date
+- plan evidence queries from the current case, open questions, and information gaps
+- distinguish candidate search results from fetched, citeable evidence
+- expose evidence status and source links in the decision panel
 
 ### 3. Decision engine
 

@@ -1,5 +1,21 @@
 # Research Notes
 
+## 2026-05-21 Evidence Tool Layer
+
+Command:
+
+```powershell
+smart-search search "AI agent evidence retrieval source citation fetch before claim design patterns RAG fact checking" --validation balanced --extra-sources 2 --format json --output C:\tmp\smart-search-evidence\real-decision-agent\evidence-layer-patterns.json
+```
+
+Relevant product/architecture takeaway:
+
+- The evidence layer should follow a retrieve/fetch-before-claim pattern.
+- Search results are discovery candidates, not final proof.
+- Fetched page text with URL/title metadata should be stored separately as citeable evidence.
+- Agent prompts should receive fetched evidence summaries and abstain or ask for more evidence when sources are insufficient.
+- The implementation should keep retrieval, verification/fetching, and answer synthesis as separate modules.
+
 ## Sources Used
 
 - [OpenAI Agents SDK](https://platform.openai.com/docs/guides/agents)
@@ -48,4 +64,3 @@
 - Treat mobile clients as adapters, not as the system of record.
 - Keep search, scoring, and state in the server.
 - Keep Markdown skill files small and task-oriented.
-

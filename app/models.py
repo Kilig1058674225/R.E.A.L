@@ -163,6 +163,12 @@ class EvidenceSearchRequest(BaseModel):
     extra_sources: int = Field(default=2, ge=0, le=5)
 
 
+class EvidenceRunRequest(BaseModel):
+    focus: str = Field(default="", max_length=500)
+    max_queries: int = Field(default=3, ge=1, le=5)
+    fetch_sources: int = Field(default=3, ge=0, le=8)
+
+
 class EvidenceItem(BaseModel):
     id: int
     case_id: int
@@ -173,6 +179,14 @@ class EvidenceItem(BaseModel):
     fetched_text: str
     confidence: str
     created_at: datetime
+
+
+class EvidenceRunResponse(BaseModel):
+    queries: list[str] = Field(default_factory=list)
+    fetched_count: int = 0
+    candidate_count: int = 0
+    evidence_items: list[EvidenceItem] = Field(default_factory=list)
+    notes: list[str] = Field(default_factory=list)
 
 
 class JournalCreate(BaseModel):
