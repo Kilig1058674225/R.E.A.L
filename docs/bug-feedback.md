@@ -64,3 +64,4 @@
 - LLM configuration is now read from `.env`; the local `.env` template intentionally has an empty API key until the user fills it in.
 - Manual evidence search and quick evaluation endpoints still exist, but are no longer exposed as primary UI controls.
 - `POST /api/cases/{case_id}/evidence/run` is now the primary evidence-tool endpoint; the older manual search endpoint remains available for debugging/advanced use.
+- The assistant previously described itself as unable to browse the web even though the backend had evidence tooling; the system prompt now explicitly discloses the smart-search capability layer.

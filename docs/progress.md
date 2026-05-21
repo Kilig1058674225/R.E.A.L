@@ -386,3 +386,17 @@
   - `node --check app.js`; result: passed.
   - Python compile check; result: passed.
   - frontend DOM id consistency check; result: no missing ids.
+
+## 2026-05-21 Search Capability Disclosure Fix
+
+- Fixed an agent self-description bug where the assistant could say it had no联网/实时搜索能力 even though the backend had smart-search evidence tooling.
+- Updated the REAL system prompt:
+  - explicitly says the system is connected to the `smart-search` evidence tool layer.
+  - tells the assistant to answer capability questions truthfully: it can search/fetch/save evidence through the tool layer.
+  - forbids saying "I cannot search online" unless the evidence tool actually fails.
+- Added `联网`, `搜索`, `网页`, `核验`, `证据`, and related words to search-trigger terms.
+- Added regression coverage so the LLM prompt includes the smart-search capability disclosure.
+- Validation:
+  - `pytest -q`; result: 15 passed.
+  - `node --check app.js`; result: passed.
+  - Python compile check; result: passed.

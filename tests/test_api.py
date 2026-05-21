@@ -124,6 +124,43 @@ def test_agent_message_records_user_and_assistant(monkeypatch, tmp_path):
         assert "正在判断：" in state["summary"]
 
 
+def test_agent_prompt_discloses_smart_search_capability(monkeypatch, tmp_path):
+    monkeypatch.setenv("LLM_BASE_URL", "https://example.test/v1")
+    monkeypatch.setenv("LLM_API_KEY", "test-key")
+    monkeypatch.setenv("LLM_MODEL", "test-model")
+    client = build_client(monkeypatch, tmp_path)
+
+    def fake_run_evidence_tool(conn, case_id, payload):
+        return None
+
+    def fake_chat_completion(settings, *, messages, temperature=0.2, max_tokens=900):
+        joined = "\n".join(item["content"] for item in messages)
+        assert "smart-search 证据工具层" in joined
+        assert "不能声称自己没有联网搜索能力" in joined
+        return "## 简洁结论\n可以。我可以通过系统的 smart-search 证据工具进行联网检索、抓取关键网页并保存证据；边界是我不是直接操作浏览器，而是通过证据工具完成核验。\n\n当前动作类型：观察\n\n## 详细分析\n- 如果你给出具体问题，我会生成核验点并检索证据。"
+
+    monkeypatch.setattr("app.services.decision_agent.run_evidence_tool", fake_run_evidence_tool)
+    monkeypatch.setattr("app.services.decision_agent.chat_completion", fake_chat_completion)
+
+    with client:
+        case = client.post(
+            "/api/cases",
+            json={
+                "title": "联网能力测试",
+                "user_goal": "你好你有联网搜索能力吗",
+                "current_question": "你好你有联网搜索能力吗",
+            },
+        ).json()
+        response = client.post(
+            f"/api/cases/{case['id']}/agent/message",
+            json={"content": "你好你有联网搜索能力吗"},
+        )
+        assert response.status_code == 200
+        answer = response.json()["assistant_message"]["content"]
+        assert "可以" in answer
+        assert "smart-search" in answer
+
+
 def test_agent_message_stream_records_assistant(monkeypatch, tmp_path):
     monkeypatch.setenv("LLM_BASE_URL", "https://example.test/v1")
     monkeypatch.setenv("LLM_API_KEY", "test-key")
