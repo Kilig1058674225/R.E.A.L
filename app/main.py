@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import json
+import secrets
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Iterator
 
-from fastapi import Depends, FastAPI, HTTPException
-from fastapi.responses import FileResponse, Response, StreamingResponse
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from app import repository
@@ -60,6 +61,30 @@ async def lifespan(_app: FastAPI):
 app = FastAPI(title="REAL Decision Agent", version="0.1.0", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
+PUBLIC_API_PATHS = {"/api/health", "/api/auth/status", "/api/llm/config"}
+
+
+@app.middleware("http")
+async def optional_access_token_auth(request: Request, call_next):
+    settings = get_settings()
+    if not settings.auth_required or not request.url.path.startswith("/api/"):
+        return await call_next(request)
+    if request.url.path in PUBLIC_API_PATHS:
+        return await call_next(request)
+
+    token = request.headers.get("x-real-token", "").strip()
+    authorization = request.headers.get("authorization", "").strip()
+    if authorization.lower().startswith("bearer "):
+        token = authorization[7:].strip()
+
+    if secrets.compare_digest(token, settings.real_access_token):
+        return await call_next(request)
+    return JSONResponse(
+        {"detail": "REAL access token required"},
+        status_code=401,
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
 
 def db():
     with get_db() as conn:
@@ -79,6 +104,12 @@ def favicon() -> Response:
 @app.get("/api/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/api/auth/status")
+def auth_status() -> dict[str, bool]:
+    settings = get_settings()
+    return {"required": settings.auth_required}
 
 
 @app.get("/api/llm/config", response_model=LLMConfigStatus)

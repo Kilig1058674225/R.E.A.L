@@ -27,6 +27,8 @@ http://127.0.0.1:8000
 
 Copy `.env.example` to `.env` and fill in your OpenAI-compatible provider settings before using LLM-backed chat.
 
+For phone access or any non-local deployment, set `REAL_ACCESS_TOKEN` in `.env`. When it is set, `/api/*` endpoints require `Authorization: Bearer <token>` except health, auth status, and LLM config. The web UI will prompt once and store the token in browser local storage.
+
 ## Tests
 
 ```powershell

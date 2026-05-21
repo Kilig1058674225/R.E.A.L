@@ -42,10 +42,15 @@ class Settings:
     llm_api_key: str
     llm_model: str
     llm_timeout_seconds: float
+    real_access_token: str
 
     @property
     def llm_configured(self) -> bool:
         return bool(self.llm_base_url and self.llm_api_key and self.llm_model)
+
+    @property
+    def auth_required(self) -> bool:
+        return bool(self.real_access_token)
 
 
 def get_settings() -> Settings:
@@ -60,4 +65,5 @@ def get_settings() -> Settings:
         llm_api_key=os.environ.get("LLM_API_KEY", "").strip(),
         llm_model=os.environ.get("LLM_MODEL", "").strip(),
         llm_timeout_seconds=max(5.0, timeout_seconds),
+        real_access_token=os.environ.get("REAL_ACCESS_TOKEN", "").strip(),
     )

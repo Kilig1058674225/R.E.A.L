@@ -6,15 +6,45 @@ const state = {
   brief: null,
   actionPlan: null,
   reviews: [],
+  accessToken: window.localStorage.getItem("realAccessToken") || "",
 };
 
 const $ = (id) => document.getElementById(id);
 
-async function api(path, options = {}) {
+function requestAccessToken() {
+  const token = window.prompt("请输入 REAL 访问令牌");
+  if (token === null) {
+    return "";
+  }
+  state.accessToken = token.trim();
+  if (state.accessToken) {
+    window.localStorage.setItem("realAccessToken", state.accessToken);
+  } else {
+    window.localStorage.removeItem("realAccessToken");
+  }
+  return state.accessToken;
+}
+
+async function authedFetch(path, options = {}, retryAuth = true) {
+  const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+  if (state.accessToken) {
+    headers.Authorization = `Bearer ${state.accessToken}`;
+  }
   const response = await fetch(path, {
-    headers: { "Content-Type": "application/json" },
     ...options,
+    headers,
   });
+  if (response.status === 401 && retryAuth) {
+    const token = requestAccessToken();
+    if (token) {
+      return authedFetch(path, options, false);
+    }
+  }
+  return response;
+}
+
+async function api(path, options = {}, retryAuth = true) {
+  const response = await authedFetch(path, options, retryAuth);
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     throw new Error(data.detail || `Request failed: ${response.status}`);
@@ -428,9 +458,8 @@ async function deleteJournal(journalId) {
 }
 
 async function readEventStream(path, payload, handlers) {
-  const response = await fetch(path, {
+  const response = await authedFetch(path, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
   if (!response.ok) {

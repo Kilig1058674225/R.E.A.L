@@ -55,6 +55,34 @@ def test_llm_config_status(monkeypatch, tmp_path):
         assert data["model"] == "test-model"
 
 
+def test_optional_access_token_auth(monkeypatch, tmp_path):
+    monkeypatch.setenv("REAL_ACCESS_TOKEN", "secret-token")
+    client = build_client(monkeypatch, tmp_path)
+    with client:
+        status = client.get("/api/auth/status")
+        assert status.status_code == 200
+        assert status.json() == {"required": True}
+
+        assert client.get("/api/health").status_code == 200
+        assert client.get("/api/cases").status_code == 401
+        assert client.get("/api/cases", headers={"Authorization": "Bearer wrong"}).status_code == 401
+
+        authorized = client.post(
+            "/api/cases",
+            headers={"Authorization": "Bearer secret-token"},
+            json={
+                "title": "需要保护的决策",
+                "user_goal": "部署到手机访问时不想裸奔。",
+                "current_question": "是否加访问令牌？",
+            },
+        )
+        assert authorized.status_code == 200
+
+        via_header = client.get("/api/cases", headers={"X-REAL-Token": "secret-token"})
+        assert via_header.status_code == 200
+        assert via_header.json()[0]["title"] == "需要保护的决策"
+
+
 def test_agent_message_records_user_and_assistant(monkeypatch, tmp_path):
     monkeypatch.setenv("LLM_BASE_URL", "https://example.test/v1")
     monkeypatch.setenv("LLM_API_KEY", "test-key")

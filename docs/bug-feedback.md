@@ -5,6 +5,8 @@
 - Exact mobile client parity for skill loading, MCP orchestration, and multi-turn state on RikkaHub and Cherry Studio mobile still needs validation before making either client a first-class path.
 - Final model/provider choice for the backend is not locked yet.
 - Need to confirm the best storage strategy for long-lived session summaries if the project grows beyond SQLite.
+- Final production auth shape is not locked; `REAL_ACCESS_TOKEN` is a simple deployment guard, not user accounts or multi-user authorization.
+- This automation run could not execute full `pytest -q` because the sandboxed shell lacks a working Python/Pytest environment with project dependencies.
 
 ## Known Risks
 
@@ -51,6 +53,7 @@
 - Added icon-only rename/delete controls for conversation records and icon-only delete controls for Journal entries.
 - Fixed current-suggestion summary incorrectly treating greetings, model questions, and raw first messages as the decision goal.
 - Clarified the right decision panel labels so action steps, questions to answer, and review journal timing are easier to distinguish.
+- Added optional `REAL_ACCESS_TOKEN` API protection and frontend token prompting for phone/non-local deployment readiness.
 
 ## New Implementation Notes
 

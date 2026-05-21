@@ -343,3 +343,21 @@
   - schedule: every 6 hours
   - workspace: `E:\AIwork\real`
   - behavior: read project docs, research comparable products with smart-search when useful, implement one high-impact iteration, run checks, update docs, commit, and push when tests pass.
+
+## 2026-05-20 Auth Readiness Pass 1
+
+- Added optional deployment access-token protection:
+  - `REAL_ACCESS_TOKEN` enables API protection when set.
+  - protected `/api/*` routes accept `Authorization: Bearer <token>` or `X-REAL-Token`.
+  - `/api/health`, `/api/auth/status`, and `/api/llm/config` remain public for readiness/config checks.
+- Added `GET /api/auth/status` so clients can detect whether token auth is enabled without exposing the token.
+- Updated the frontend API and streaming helpers to attach the stored token, prompt once on `401`, and save the token in browser local storage.
+- Added `.env.example` and `README.md` notes for phone/non-local deployment.
+- Added regression coverage for optional access-token auth behavior in `tests/test_api.py`.
+- Updated static cache-busting version to `v=12`.
+- Validation:
+  - `node --check app/static/app.js`; result: passed via `C:\Users\10586\AppData\Local\OpenAI\Codex\bin\node.exe`.
+  - frontend DOM id consistency check via Node REPL; result: passed.
+  - `python -m compileall app`; result: passed via LibreOffice Python 3.11.14.
+  - `git diff --check`; result: passed.
+  - `pytest -q`; not completed in this automation environment because `pytest` is not on PATH, the Windows Store Python shim is unavailable, `uv` cannot create/use its cache or managed Python under sandbox restrictions, and the reachable LibreOffice Python does not have project test dependencies installed.
