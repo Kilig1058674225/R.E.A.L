@@ -186,7 +186,7 @@ async function loadMessages() {
 }
 
 async function handleComposer(event) {
-  event.preventDefault();
+  event?.preventDefault?.();
   if (state.busy) return;
   const content = $("composerInput").value.trim();
   if (!content) return;
@@ -205,7 +205,8 @@ async function handleComposer(event) {
       });
       state.activeCase = created;
       renderCase(created);
-      await loadCases();
+      $("messages").innerHTML = "";
+      appendLocalMessage("user", content);
       await streamAssistant(`/api/cases/${created.id}/agent/respond/stream`, { note: content });
     } else {
       appendLocalMessage("user", content);
@@ -213,7 +214,11 @@ async function handleComposer(event) {
     }
     await loadCases();
   } catch (error) {
-    alert(error.message);
+    console.error(error);
+    if (!error.renderedInChat) {
+      appendLocalMessage("assistant", "", { streaming: false }).querySelector(".message-body").innerHTML =
+        renderToolError(error.message);
+    }
   } finally {
     setBusy(false);
   }
@@ -272,6 +277,7 @@ async function streamAssistant(path, payload) {
   } catch (error) {
     assistantNode.classList.remove("streaming");
     body.innerHTML = renderToolError(error.message);
+    error.renderedInChat = true;
     throw error;
   }
 
@@ -898,6 +904,7 @@ function escapeHtml(value) {
 }
 
 $("composerForm").addEventListener("submit", handleComposer);
+$("sendBtn").addEventListener("click", handleComposer);
 $("newCaseBtn").addEventListener("click", newCase);
 $("refreshBtn").addEventListener("click", loadCases);
 $("savePlanBtn").addEventListener("click", savePlanToJournal);

@@ -277,6 +277,8 @@ def stream_agent_reply(conn, case_id: int, payload: AgentReplyRequest) -> Iterat
         yield sse_event("error", {"detail": str(exc)})
     except KeyError:
         yield sse_event("error", {"detail": "Decision case not found"})
+    except Exception as exc:
+        yield sse_event("error", {"detail": f"处理过程异常：{exc}"})
 
 
 @app.post("/api/cases/{case_id}/agent/respond/stream")

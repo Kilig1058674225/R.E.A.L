@@ -240,6 +240,51 @@ def test_agent_stream_emits_status_events(monkeypatch, tmp_path):
             assert "event: delta" in body
 
 
+def test_agent_stream_reports_unexpected_tool_errors(monkeypatch, tmp_path):
+    monkeypatch.setenv("LLM_BASE_URL", "https://example.test/v1")
+    monkeypatch.setenv("LLM_API_KEY", "test-key")
+    monkeypatch.setenv("LLM_MODEL", "test-model")
+    client = build_client(monkeypatch, tmp_path)
+
+    def broken_evidence_tool(conn, case_id, payload):
+        raise RuntimeError("tool exploded")
+
+    monkeypatch.setattr("app.services.decision_agent.run_evidence_tool", broken_evidence_tool)
+
+    with client:
+        case = client.post(
+            "/api/cases",
+            json={
+                "title": "证据错误测试",
+                "user_goal": "我想联网搜索竞品情况。",
+                "current_question": "请联网搜索竞品情况。",
+            },
+        ).json()
+        with client.stream(
+            "POST",
+            f"/api/cases/{case['id']}/agent/respond/stream",
+            json={"note": "请联网搜索竞品情况。"},
+        ) as response:
+            assert response.status_code == 200
+            body = "".join(response.iter_text())
+            assert "event: status" in body
+            assert "event: error" in body
+            assert "tool exploded" in body
+
+
+def test_smart_search_command_can_use_configured_windows_cmd(monkeypatch, tmp_path):
+    from app.services.smart_search import _smart_search_command
+
+    command_path = tmp_path / "smart-search.cmd"
+    command_path.write_text("@echo off\n", encoding="utf-8")
+    monkeypatch.setenv("SMART_SEARCH_COMMAND", str(command_path))
+
+    command = _smart_search_command(["doctor", "--format", "json"])
+
+    assert command[0] == str(command_path)
+    assert command[1:] == ["doctor", "--format", "json"]
+
+
 def test_case_state_extracts_questions_and_options(monkeypatch, tmp_path):
     client = build_client(monkeypatch, tmp_path)
     with client:

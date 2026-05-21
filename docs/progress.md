@@ -416,3 +416,26 @@
   - `node --check app.js`; result: passed.
   - Python compile check; result: passed.
   - frontend DOM id consistency check; result: no missing ids.
+
+## 2026-05-21 Evidence Browser Bugfix Pass 1
+
+- Browser-tested a live search request from the web UI and reproduced the disappearing/blank response path.
+- Fixed the composer submit flow:
+  - the send button is now `type="button"` with an explicit click handler.
+  - new-case messages render immediately before streaming starts, instead of waiting for sidebar/panel reload.
+  - frontend errors now render as an assistant error bubble instead of only using `alert`.
+- Fixed the server-side smart-search launcher on Windows:
+  - resolves `SMART_SEARCH_COMMAND`, PATH candidates, `%APPDATA%\npm\smart-search.cmd`, and the local `D:\nodejs\node_global\smart-search.cmd`.
+  - supports `.ps1` through PowerShell when needed.
+  - reads subprocess output as UTF-8 with replacement to avoid GBK decode failures.
+- Added SSE fallback error events for unexpected backend exceptions so the browser does not receive half-finished streams.
+- Browser verification:
+  - sent `验证：请联网搜索今天英伟达 NVDA 股票最新行情和相关新闻。`
+  - saw tool status in chat: `正在判断是否需要联网核验证据...`
+  - final assistant reply rendered with concise conclusion + detailed analysis.
+  - evidence panel showed `2 条可引用`.
+- Validation:
+  - `pytest -q`; result: 18 passed.
+  - `node --check app/static/app.js`; result: passed.
+  - `python -m compileall app`; result: passed.
+  - `git diff --check`; result: passed.

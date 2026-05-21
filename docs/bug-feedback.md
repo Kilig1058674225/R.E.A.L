@@ -66,3 +66,7 @@
 - `POST /api/cases/{case_id}/evidence/run` is now the primary evidence-tool endpoint; the older manual search endpoint remains available for debugging/advanced use.
 - The assistant previously described itself as unable to browse the web even though the backend had evidence tooling; the system prompt now explicitly discloses the smart-search capability layer.
 - Evidence search/fetch previously ran before the first stream token with no visible progress, making search-triggered messages look like they disappeared; streaming now emits visible status events and renders tool errors in the chat bubble.
+- Live browser testing found and fixed two follow-up issues in the evidence path:
+  - New-case send could leave only the user bubble visible if the search tool failed before the stream completed.
+  - The FastAPI process could not resolve the Windows npm `smart-search` shim and SSE could stop after the first status event.
+- The smart-search wrapper now supports `SMART_SEARCH_COMMAND`, Windows `.cmd/.ps1` discovery, UTF-8-safe subprocess reading, and SSE error fallback for unexpected exceptions.
